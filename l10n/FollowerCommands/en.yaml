@@ -1,0 +1,34 @@
+page_name: Follower Commands
+page_description: Allows you to give your followers commands based on what you're looking at.
+
+settings_groupName: Settings
+hotkey_name: Give Command Hotkey
+hotkey_desc: |
+  Command is based on where you're lookking at:
+  - Actor -> Attack it
+  - Terrain or static -> Move there (and then run back, because vanilla AI)
+maxDistance_name: Max Command Distance
+maxDistance_desc: For reference, the River Odai is around 1000 units wide in Balmora.
+animationVariant_name: Animation
+kcommand01: One wave
+kcommand02: Two waves
+kcommand03: Nicolas Cage
+kcommand04: King-like
+kcommand_random: Random
+
+commands_groupName: Commands
+unlockOwned_name: Unlock Owned
+unlockOwned_desc: >
+  Detection can't be tracked.
+  Either RP or abuse it.
+  It's your game, after all.
+lootOwned_name: Loot Owned
+kamikazeUntrap_name: Kamikaze Untrap
+kamikazeUntrap_desc: >
+  If no probes is found, the healthiest follower will face tank the trap.
+  Requires 2 commands.
+
+
+
+giveCommand_name: Give Command
+giveCommand_desc: ""

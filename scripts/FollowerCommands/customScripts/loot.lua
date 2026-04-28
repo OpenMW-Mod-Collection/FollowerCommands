@@ -1,0 +1,1 @@
+-- loot01 is the standing anim, loot02 for the crouch

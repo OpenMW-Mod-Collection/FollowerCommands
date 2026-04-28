@@ -1,0 +1,7 @@
+PLAYER: scripts/FollowerCommands/player.lua
+GLOBAL: scripts/FollowerCommands/global.lua
+
+CUSTOM: scripts/FollowerCommands/customScripts/pickprobe.lua
+CUSTOM: scripts/FollowerCommands/customScripts/loot.lua
+
+MENU: scripts/FollowerCommands/settingsMenu.lua

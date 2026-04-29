@@ -4,15 +4,15 @@ C.commandTriggerKey = "FollowerCommands_command"
 
 C.scribs = {
     -- vanilla
-    ["scrib"] = true,
-    ["scrib diseased"] = true,
-    ["scrib_vaba-amus"] = true,
-    ["scrib blighted"] = true,
-    ["scrib_rerlas"] = true,
+    ["scrib"]              = true,
+    ["scrib diseased"]     = true,
+    ["scrib_vaba-amus"]    = true,
+    ["scrib blighted"]     = true,
+    ["scrib_rerlas"]       = true,
 
     -- ice scrib
     -- https://www.nexusmods.com/morrowind/mods/51338
-    ["icescrib"] = true,
+    ["icescrib"]           = true,
 
     -- Creatures and Critters
     -- https://www.nexusmods.com/morrowind/mods/54518
@@ -20,17 +20,33 @@ C.scribs = {
 
     -- Diverse Scribs
     -- https://www.nexusmods.com/morrowind/mods/56176
-    ["scrib_2"] = true,
-    ["scrib diseased_2"] = true,
-    ["ttooth_scrib_2"] = true,
+    ["scrib_2"]            = true,
+    ["scrib diseased_2"]   = true,
+    ["ttooth_scrib_2"]     = true,
 
     -- TriangleTooth's Ecology Mod
     -- https://www.nexusmods.com/morrowind/mods/47061
-    ["ttooth_scrib"] = true,
+    ["ttooth_scrib"]       = true,
 
     -- Utility Spells
     -- https://www.nexusmods.com/morrowind/mods/58288
-    ["scrib_summon"] = true,
+    ["scrib_summon"]       = true,
+}
+
+C.actions = {
+    kill          = "kill",
+    travel        = "travel",
+    lockpick      = "lockpick",
+    untrap        = "untrap",
+    lootContainer = "lootContainer",
+    lootItem      = "lootItem",
+}
+
+C.customScripts = {
+    [C.actions.lockpick]      = "scripts/FollowerCommands/customScripts/pickprobe.lua",
+    [C.actions.untrap]        = "scripts/FollowerCommands/customScripts/pickprobe.lua",
+    [C.actions.lootContainer] = "scripts/FollowerCommands/customScripts/loot.lua",
+    [C.actions.lootItem]      = "scripts/FollowerCommands/customScripts/loot.lua",
 }
 
 return C

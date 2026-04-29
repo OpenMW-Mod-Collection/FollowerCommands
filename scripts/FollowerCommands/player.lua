@@ -26,14 +26,9 @@ CheckDependency(
     I.FollowerDetectionUtil and I.FollowerDetectionUtil.version or -1
 )
 
-local commands = {
-    lockpick = "lockpick",
-    untrap = "untrap",
-    kill = "kill",
-    travel = "travel",
-}
 local lastCommand
 local occupiedObjects = {}
+local occupiedFollowers = {}
 
 local function playCommandAnim()
     local animKey = settings:get("animationVariant") == "kcommand_random"
@@ -59,8 +54,18 @@ local function playCommandAnim()
     )
 end
 
+local function resetAiPackages(follower)
+    follower:sendEvent(
+        "StartAIPackage",
+        {
+            type = "Follow",
+            target = self,
+        }
+    )
+end
+
 local function commandCombat(followers, target)
-    lastCommand = commands.kill
+    lastCommand = consts.actions.kill
     local pkg = {
         type = "Combat",
         target = target
@@ -71,23 +76,23 @@ local function commandCombat(followers, target)
 end
 
 local function commandTravel(followers, pos)
-    lastCommand = commands.travel
+    lastCommand = consts.actions.travel
     local pkg = {
         type = "Travel",
         destPosition = nearby.findNearestNavMeshPosition(pos),
         cancelOther = false,
     }
-    for _, actor in ipairs(followers) do
-        actor:sendEvent("RemoveAIPackage", "Travel")
-        actor:sendEvent("StartAIPackage", pkg)
+    for _, follower in ipairs(followers) do
+        resetAiPackages(follower)
+        follower:sendEvent("StartAIPackage", pkg)
     end
 end
 
 local function commandLockpick(followers, obj)
-    lastCommand = commands.lockpick
+    lastCommand = consts.actions.lockpick
     local selectedFollower, bestScore = followerPicker.pickprobe(followers, types.Lockpick)
 
-    if not selectedFollower then
+    if bestScore == 0 then
         self:sendEvent("ShowMessage", { message = "Seems like no one has any lockpicks." })
         return
     end
@@ -99,30 +104,34 @@ local function commandLockpick(followers, obj)
     end
 
     occupiedObjects[obj.id] = true
+    occupiedFollowers[selectedFollower.id] = true
     local destPos = nearby.findNearestNavMeshPosition(obj.position)
     self:sendEvent("ShowMessage", { message = "Sure, I'll unlock it." })
+    resetAiPackages(selectedFollower)
     selectedFollower:sendEvent(
         "StartAIPackage",
         {
             type = "Travel",
-            destPosition = destPos
+            destPosition = destPos,
+            cancelOther = false,
         }
     )
     core.sendGlobalEvent(
         "FollowerCommands_pausedAction",
         {
-            action = "lockpick",
-            target = obj,
+            action   = "lockpick",
+            target   = obj,
             follower = selectedFollower,
-            destPos = destPos,
+            destPos  = destPos,
+            player   = self,
         }
     )
 end
 
 local function commandUntrap(followers, obj)
-    
 
-    lastCommand = commands.untrap
+
+    lastCommand = consts.actions.untrap
 end
 
 input.registerTriggerHandler(
@@ -136,9 +145,9 @@ input.registerTriggerHandler(
 
         local myFollowers = {}
         for _, state in pairs(followerList) do
-            if state.leader and state.leader.id == self.id
+            local isMyFollower = state.leader and state.leader.id == self.id
                 or state.superLeader and state.superLeader.id == self.id
-            then
+            if isMyFollower and not occupiedFollowers[state.actor.id] then
                 myFollowers[#myFollowers + 1] = state.actor
             end
         end
@@ -172,7 +181,7 @@ input.registerTriggerHandler(
         local lootOwned     = not isOwned or settingsCommands:get("lootOwned")
 
         local hitAliveActor = isActor and not isDead
-        local hitLocked     = isLockable and types.Lockable.getLockLevel(obj)
+        local hitLocked     = isLockable and types.Lockable.isLocked(obj)
         local hitTrapped    = isLockable and types.Lockable.getTrapSpell(obj)
         local hitContainer  = types.Container.objectIsInstance(obj) or isDead
         local hitItem       = types.Item.objectIsInstance(obj)
@@ -198,6 +207,15 @@ input.registerTriggerHandler(
         end
     end)
 )
+
+return {
+    eventHandlers = {
+        FollowerCommands_objectFreed = function(data)
+            occupiedObjects[data.target.id] = nil
+            occupiedFollowers[data.follower.id] = nil
+        end
+    }
+}
 
 -- I.AnimationController.addTextKeyHandler(
 --     "",

@@ -1,17 +1,17 @@
--- local util = require("openmw.util")
+local util = require("openmw.util")
 local camera = require("openmw.camera")
 -- local nearby = require("openmw.nearby")
 
 local camUtil = {}
 
--- camUtil.anglesToV = function(pitch, yaw)
---     local xzLen = math.cos(pitch)
---     return util.vector3(
---         xzLen * math.sin(yaw), -- x
---         xzLen * math.cos(yaw), -- y
---         math.sin(pitch)        -- z
---     )
--- end
+camUtil.anglesToV = function(pitch, yaw)
+    local xzLen = math.cos(pitch)
+    return util.vector3(
+        xzLen * math.sin(yaw), -- x
+        xzLen * math.cos(yaw), -- y
+        math.sin(pitch)        -- z
+    )
+end
 
 -- camUtil.getRotation = function(rot, angle)
 --     local z, y, x = rot:getAnglesZYX()

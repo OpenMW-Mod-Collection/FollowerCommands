@@ -1,4 +1,7 @@
 local types = require("openmw.types")
+local storage = require("openmw.storage")
+
+local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
 
 local picker = {}
 
@@ -6,10 +9,10 @@ picker.pickprobe = function(followers, type)
     local selectedFollower
     local biggestCount = 0
     local bestScore = 0
-    for _, actor in ipairs(followers) do
-        if not types.NPC.objectIsInstance(actor) then goto continue end
+    for _, follower in ipairs(followers) do
+        if not types.NPC.objectIsInstance(follower) then goto continue end
 
-        local pickprobes = actor.type.inventory(actor):getAll(type)
+        local pickprobes = follower.type.inventory(follower):getAll(type)
         if not pickprobes then goto continue end
 
         local bestQuality = 0
@@ -22,21 +25,34 @@ picker.pickprobe = function(followers, type)
             end
         end
 
-        local security = actor.type.stats.skills.security(actor).modified
-        local agility = actor.type.stats.attributes.agility(actor).modified
-        local luck = actor.type.stats.attributes.luck(actor).modified
+        local security = follower.type.stats.skills.security(follower).modified
+        local agility = follower.type.stats.attributes.agility(follower).modified
+        local luck = follower.type.stats.attributes.luck(follower).modified
         local statModifier = security + agility / 5 + luck / 10
 
         local score = statModifier * bestQuality
         if score > bestScore and count > biggestCount then
             bestScore = score
             biggestCount = count
-            selectedFollower = actor
+            selectedFollower = follower
         end
 
         ::continue::
     end
     return selectedFollower, bestScore
+end
+
+picker.forceUntrap = function(followers)
+    local selectedFollower
+    local highestHP = settingsCommands:get("kamikazeUntrapMinHealth")
+    for _, follower in ipairs(followers) do
+        local health = follower.type.stats.dynamic.health(follower)
+        if health.current >= highestHP then
+            highestHP = health.current
+            selectedFollower = follower
+        end
+    end
+    return selectedFollower
 end
 
 picker.loot = function(followers, obj)

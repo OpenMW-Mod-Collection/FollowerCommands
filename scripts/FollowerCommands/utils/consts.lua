@@ -38,6 +38,7 @@ C.actions = {
     travel        = "travel",
     lockpick      = "lockpick",
     untrap        = "untrap",
+    forceUntrap   = "forceUntrap",
     lootContainer = "lootContainer",
     lootItem      = "lootItem",
 }
@@ -45,6 +46,7 @@ C.actions = {
 C.customScripts = {
     [C.actions.lockpick]      = "scripts/FollowerCommands/customScripts/pickprobe.lua",
     [C.actions.untrap]        = "scripts/FollowerCommands/customScripts/pickprobe.lua",
+    [C.actions.forceUntrap]   = "scripts/FollowerCommands/customScripts/forceUntrap.lua",
     [C.actions.lootContainer] = "scripts/FollowerCommands/customScripts/loot.lua",
     [C.actions.lootItem]      = "scripts/FollowerCommands/customScripts/loot.lua",
 }

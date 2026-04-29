@@ -23,10 +23,10 @@ unlockOwned_desc: >
   Either RP or abuse it.
   It's your game, after all.
 lootOwned_name: Loot Owned
-kamikazeUntrap_name: Kamikaze Untrap
+kamikazeUntrapMinHealth_name: Min Health for Kamikaze Untrap
 kamikazeUntrap_desc: >
-  If no probes is found, the healthiest follower will face tank the trap.
-  Requires 2 commands.
+  If no probes are found, the healthiest follower will face tank the trap.
+  Requires 2 consecutive commands.
 
 
 

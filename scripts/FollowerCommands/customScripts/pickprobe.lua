@@ -4,6 +4,8 @@ local core = require("openmw.core")
 local anim = require("openmw.animation")
 local types = require("openmw.types")
 
+local consts = require("scripts.FollowerCommands.utils.consts")
+
 local isUntrapping
 ---@type GameObject
 local target
@@ -20,7 +22,7 @@ local security = self.type.stats.skills.security(self)
 local agility = self.type.stats.attributes.agility(self)
 local luck = self.type.stats.attributes.luck(self)
 
-local function pickBestPickprobe()
+local function getBestPickprobe()
     local toolType = isUntrapping and types.Probe or types.Lockpick
     local pickprobes = inv:getAll(toolType)
     local worstCondition
@@ -53,18 +55,18 @@ local function tryPickprobing()
         }
     )
 
-    local pickprobe = pickBestPickprobe()
+    local pickprobe = getBestPickprobe()
     if not pickprobe then
         failure = true
         return
     end
-    
+
     local record = pickprobe.type.records[pickprobe.recordId]
     local quality = record.quality
     local statMod = security.modified
         + agility.modified / 5
         + luck.modified / 10
-    local lockLevel = target.type.getLockLevel(target)
+    local lockLevel = isUntrapping and 0 or target.type.getLockLevel(target)
     local chance = quality * statMod - lockLevel
     success = chance >= 100 or chance >= math.random(0, 100)
 
@@ -75,16 +77,24 @@ local function tryPickprobing()
 
     if success then
         if isUntrapping then
+            core.sound.playSound3d("disarm trap", self)
             core.sendGlobalEvent("FollowerCommands_untrap", target)
         else
+            core.sound.playSound3d("open lock", self)
             core.sendGlobalEvent("FollowerCommands_unlock", target)
+        end
+    else
+        if isUntrapping then
+            core.sound.playSound3d("disarm trap fail", self)
+        else
+            core.sound.playSound3d("open lock fail", self)
         end
     end
 end
 
 local function onInit(data)
     action = data.action
-    isUntrapping = data.action == "untrap"
+    isUntrapping = data.action == consts.actions.untrap
     target = data.target
     player = data.player
 end
@@ -100,7 +110,6 @@ local function onUpdate(dt)
 end
 
 local function freeSelf()
-    print("freee")
     self:enableAI(true)
     core.sendGlobalEvent(
         "FollowerCommands_detachScript",
@@ -118,10 +127,16 @@ I.AnimationController.addTextKeyHandler(
         if key ~= "stop" then return end
         if success then
             freeSelf()
-            player:sendEvent("ShowMessage", { message = "Unlocked!" })
+            local msg = isUntrapping
+                and "Untrapped!"
+                or "Unlocked!"
+            player:sendEvent("ShowMessage", { message = msg })
         elseif failure then
             freeSelf()
-            player:sendEvent("ShowMessage", { message = "Sorry, couldn't unlock it." })
+            local msg = isUntrapping
+                and "Sorry, couldn't untrap it."
+                or "Sorry, couldn't unlock it."
+            player:sendEvent("ShowMessage", { message = msg })
         else
             tryPickprobing()
         end

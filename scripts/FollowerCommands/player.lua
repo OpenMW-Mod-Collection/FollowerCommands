@@ -27,8 +27,10 @@ CheckDependency(
 )
 
 local lastCommand
+local lastHitObj
 local occupiedObjects = {}
 local occupiedFollowers = {}
+local forceUntrapIgnored = {}
 
 local function playCommandAnim()
     local animKey = settings:get("animationVariant") == "kcommand_random"
@@ -99,12 +101,13 @@ local function commandLockpick(followers, obj)
 
     local unlockChance = bestScore - obj.type.getLockLevel(obj)
     if unlockChance < settingsCommands:get("minUnlockChance") then
-        self:sendEvent("ShowMessage", { message = "Seems like teh lock is too complex." })
+        self:sendEvent("ShowMessage", { message = "Seems like the lock is too complex." })
         return
     end
 
     occupiedObjects[obj.id] = true
     occupiedFollowers[selectedFollower.id] = true
+
     local destPos = nearby.findNearestNavMeshPosition(obj.position)
     self:sendEvent("ShowMessage", { message = "Sure, I'll unlock it." })
     resetAiPackages(selectedFollower)
@@ -119,7 +122,7 @@ local function commandLockpick(followers, obj)
     core.sendGlobalEvent(
         "FollowerCommands_pausedAction",
         {
-            action   = "lockpick",
+            action   = consts.actions.lockpick,
             target   = obj,
             follower = selectedFollower,
             destPos  = destPos,
@@ -129,9 +132,77 @@ local function commandLockpick(followers, obj)
 end
 
 local function commandUntrap(followers, obj)
-
-
     lastCommand = consts.actions.untrap
+    local selectedFollower, bestScore = followerPicker.pickprobe(followers, types.Probe)
+
+    if bestScore == 0 then
+        self:sendEvent("ShowMessage", { message = "Seems like no one has any probes." })
+        return
+    end
+
+    occupiedObjects[obj.id] = true
+    occupiedFollowers[selectedFollower.id] = true
+
+    local destPos = nearby.findNearestNavMeshPosition(obj.position)
+    self:sendEvent("ShowMessage", { message = "Sure, I'll untrap it." })
+    resetAiPackages(selectedFollower)
+    selectedFollower:sendEvent(
+        "StartAIPackage",
+        {
+            type = "Travel",
+            destPosition = destPos,
+            cancelOther = false,
+        }
+    )
+    core.sendGlobalEvent(
+        "FollowerCommands_pausedAction",
+        {
+            action   = consts.actions.untrap,
+            target   = obj,
+            follower = selectedFollower,
+            destPos  = destPos,
+            player   = self,
+        }
+    )
+end
+
+local function commandForceUntrap(followers, obj)
+    lastCommand = consts.actions.forceUntrap
+    local selectedFollower = followerPicker.forceUntrap(followers)
+
+    if not selectedFollower then
+        self:sendEvent("ShowMessage", { message = "Seems like no one is ready to take the blow." })
+        return
+    end
+
+    if settingsCommands:get("kamikazeUntrapRefuseChance") > math.random(100) then
+        self:sendEvent("ShowMessage", { message = "No one seems keen on getting zapped by this trap." })
+        return
+    end
+
+    occupiedObjects[obj.id] = true
+
+    local destPos = nearby.findNearestNavMeshPosition(obj.position)
+    self:sendEvent("ShowMessage", { message = "Sure, bring it on." })
+    resetAiPackages(selectedFollower)
+    selectedFollower:sendEvent(
+        "StartAIPackage",
+        {
+            type = "Travel",
+            destPosition = destPos,
+            cancelOther = false,
+        }
+    )
+    core.sendGlobalEvent(
+        "FollowerCommands_pausedAction",
+        {
+            action   = consts.actions.forceUntrap,
+            target   = obj,
+            follower = selectedFollower,
+            destPos  = destPos,
+            player   = self,
+        }
+    )
 end
 
 input.registerTriggerHandler(
@@ -189,13 +260,18 @@ input.registerTriggerHandler(
         local isIllegal     =
             (hitTrapped or hitContainer and not unlockOwned)
             or (hitItem or hitContainer and not lootOwned)
+        local forceUntrap = hitTrapped
+            and lastCommand == consts.actions.untrap
+            and lastHitObj == obj
 
         if hitAliveActor then
             commandCombat(myFollowers, obj)
         elseif hitLocked then
             commandLockpick(myFollowers, obj)
+        elseif forceUntrap then
+            commandForceUntrap(myFollowers, obj)
         elseif hitTrapped then
-
+            commandUntrap(myFollowers, obj)
         elseif hitContainer then
 
         elseif hitItem then
@@ -205,10 +281,34 @@ input.registerTriggerHandler(
         else
             commandTravel(myFollowers, cast.hitPos)
         end
+        
+        lastHitObj = obj
     end)
 )
 
+-- I.AnimationController.addTextKeyHandler(
+--     "",
+--     function(groupname, key)
+--         print(groupname, "|", key)
+--     end
+-- )
+
+local function onLoad(data)
+    if not data then return end
+    forceUntrapIgnored = data.forceUntrapIgnored or forceUntrapIgnored
+end
+
+local function onSave()
+    return {
+        forceUntrapIgnored = forceUntrapIgnored,
+    }
+end
+
 return {
+    engineHandlers = {
+        onLoad = onLoad,
+        onSave = onSave,
+    },
     eventHandlers = {
         FollowerCommands_objectFreed = function(data)
             occupiedObjects[data.target.id] = nil
@@ -216,10 +316,3 @@ return {
         end
     }
 }
-
--- I.AnimationController.addTextKeyHandler(
---     "",
---     function(groupname, key)
---         print(groupname, key)
---     end
--- )

@@ -93,11 +93,18 @@ I.Settings.registerGroup {
             max = 100,
         },
         {
-            key = 'kamikazeUntrap',
-            name = 'kamikazeUntrap_name',
-            description = "kamikazeUntrap_desc",
-            renderer = 'checkbox',
-            default = false,
+            key = 'kamikazeUntrapMinHealth',
+            name = 'kamikazeUntrapMinHealth_name',
+            description = "kamikazeUntrapMinHealth_desc",
+            renderer = 'number',
+            default = 50,
+        },
+        {
+            key = 'kamikazeUntrapRefuseChance',
+            name = 'kamikazeUntrapRefuseChance_name',
+            description = "kamikazeUntrapRefuseChance_desc",
+            renderer = 'number',
+            default = 25,
         },
     }
 }

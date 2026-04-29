@@ -1,5 +1,6 @@
+local world = require("openmw.world")
+
 local consts = require("scripts.FollowerCommands.utils.consts")
-local Item = require("openmw.types").Item
 
 local function pausedAction(data)
     local script = consts.customScripts[data.action]
@@ -15,12 +16,14 @@ local function detachScript(data)
 end
 
 local function onModifyPickprobeCondition(data)
-    local itemData = Item.itemData(data.item)
-    itemData.condition = math.min(data.item.type.record(data.item).maxCondition, math.max(0, itemData.condition + data.amount))
+    local itemData = data.item.type.itemData(data.item)
+    itemData.condition = math.min(
+        data.item.type.record(data.item).maxCondition,
+        math.max(0, itemData.condition + data.amount)
+    )
 
     -- Force unequip broken items
     if data.actor and itemData.condition <= 0 then
-        data.actor:sendEvent('Unequip', {item = data.item})
         data.item:remove(1)
     end
 end

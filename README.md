@@ -4,16 +4,21 @@ Adds a hotkey to give followers commands based on what you're looking at.
 
 ## Commands
 
-They're based on what you're looking at:
+They're based on what you're looking at.
 
 - Actor -> Kill him
-- Locked/trapped door/container -> Unlock/untrap it, if possible (one human actor is picked based on lockpick/probe and their skills)
-- Unlocked container or item -> Pick it up, if there's space (one human actor is picked based on his free carry capacity)
+- Locked/trapped door/container -> Unlock/untrap it, if possible
+  - One human actor is picked based on lockpick/probe and their skills
+- Trapped door/container for the second time -> Face tank it. Or not. Depends on the mood of the team
+  - One actor is picked based on their current health
+  - Summons have a priority
+- Unlocked container or item -> Pick it up, if there's space
+  - One human actor is picked based on his free carry capacity
 - Terrain or statics -> Travel there
 
 ## Known issues
 
-Followers can break locks right in fron of guards with no problems. I just can't track it. But I believe that you won't abuse it.
+- No sneak checks. Regulate your actions yourself.
 
 ## Requirements
 

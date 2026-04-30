@@ -5,14 +5,21 @@ local settingsCommands = storage.playerSection("SettingsFollowerCommands_command
 
 local picker = {}
 
-picker.pickprobe = function(followers, type)
+---@class PickprobeOptions
+---@field type anyType
+
+---@param followers GameObject[]
+---@param opts PickprobeOptions
+---@return GameObject|nil
+---@return integer
+picker.pickprobe = function(followers, opts)
     local selectedFollower
     local biggestCount = 0
     local bestScore = 0
     for _, follower in ipairs(followers) do
         if not types.NPC.objectIsInstance(follower) then goto continue end
 
-        local pickprobes = follower.type.inventory(follower):getAll(type)
+        local pickprobes = follower.type.inventory(follower):getAll(opts.type)
         if not pickprobes then goto continue end
 
         local bestQuality = 0
@@ -42,6 +49,8 @@ picker.pickprobe = function(followers, type)
     return selectedFollower, bestScore
 end
 
+---@param followers GameObject[]
+---@return GameObject|nil
 picker.forceUntrap = function(followers)
     local selectedFollower
     local highestHP = settingsCommands:get("kamikazeUntrapMinHealth")
@@ -56,7 +65,7 @@ picker.forceUntrap = function(followers)
 end
 
 picker.loot = function(followers, obj)
-    
+
 end
 
 return picker

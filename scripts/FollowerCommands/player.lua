@@ -7,30 +7,26 @@ local camera = require("openmw.camera")
 local types = require("openmw.types")
 local nearby = require("openmw.nearby")
 local anim = require("openmw.animation")
-local core = require("openmw.core")
 
-require("scripts.FollowerCommands.utils.dependencies")
-local camUtil = require("scripts.FollowerCommands.utils.camera")
+local deps = require("scripts.FollowerCommands.utils.dependencies")
 local consts = require("scripts.FollowerCommands.utils.consts")
-local followerPicker = require("scripts.FollowerCommands.utils.followerPicker")
+local camUtil = require("scripts.FollowerCommands.utils.camera")
+local ownership = require("scripts.FollowerCommands.logic.ownership")
+local commands = require("scripts.FollowerCommands.logic.commands")
 
 local settings = storage.playerSection("SettingsFollowerCommands_settings")
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
 
-CheckDependency(
-    self,
-    "Follower Commands",
-    "FollowerDetectionUtil.omwscripts",
-    I.FollowerDetectionUtil,
-    0,
-    I.FollowerDetectionUtil and I.FollowerDetectionUtil.version or -1
-)
+deps.checkAll(self, "Follower Commands", { {
+    plugin = "FollowerDetectionUtil.omwscripts",
+    interface = I.FollowerDetectionUtil,
+} })
 
 local lastCommand
 local lastHitObj
 local occupiedObjects = {}
 local occupiedFollowers = {}
-local forceUntrapIgnored = {}
+local forceUntrapIgnoredObjects = {}
 
 local function playCommandAnim()
     local animKey = settings:get("animationVariant") == "kcommand_random"
@@ -56,153 +52,21 @@ local function playCommandAnim()
     )
 end
 
-local function resetAiPackages(follower)
-    follower:sendEvent(
-        "StartAIPackage",
-        {
-            type = "Follow",
-            target = self,
-        }
-    )
-end
-
-local function commandCombat(followers, target)
-    lastCommand = consts.actions.kill
-    local pkg = {
-        type = "Combat",
-        target = target
-    }
-    for _, actor in ipairs(followers) do
-        actor:sendEvent("StartAIPackage", pkg)
-    end
-end
-
-local function commandTravel(followers, pos)
-    lastCommand = consts.actions.travel
-    local pkg = {
-        type = "Travel",
-        destPosition = nearby.findNearestNavMeshPosition(pos),
-        cancelOther = false,
-    }
-    for _, follower in ipairs(followers) do
-        resetAiPackages(follower)
-        follower:sendEvent("StartAIPackage", pkg)
-    end
-end
-
-local function commandLockpick(followers, obj)
-    lastCommand = consts.actions.lockpick
-    local selectedFollower, bestScore = followerPicker.pickprobe(followers, types.Lockpick)
-
-    if bestScore == 0 then
-        self:sendEvent("ShowMessage", { message = "Seems like no one has any lockpicks." })
-        return
+local function getMyFollowers()
+    local myFollowers = {}
+    local followerList = I.FollowerDetectionUtil.getFollowerList()
+    if not followerList or not next(followerList) then
+        return myFollowers
     end
 
-    local unlockChance = bestScore - obj.type.getLockLevel(obj)
-    if unlockChance < settingsCommands:get("minUnlockChance") then
-        self:sendEvent("ShowMessage", { message = "Seems like the lock is too complex." })
-        return
+    for _, state in pairs(followerList) do
+        local isMyFollower = state.leader and state.leader.id == self.id
+            or state.superLeader and state.superLeader.id == self.id
+        if isMyFollower and not occupiedFollowers[state.actor.id] then
+            myFollowers[#myFollowers + 1] = state.actor
+        end
     end
-
-    occupiedObjects[obj.id] = true
-    occupiedFollowers[selectedFollower.id] = true
-
-    local destPos = nearby.findNearestNavMeshPosition(obj.position)
-    self:sendEvent("ShowMessage", { message = "Sure, I'll unlock it." })
-    resetAiPackages(selectedFollower)
-    selectedFollower:sendEvent(
-        "StartAIPackage",
-        {
-            type = "Travel",
-            destPosition = destPos,
-            cancelOther = false,
-        }
-    )
-    core.sendGlobalEvent(
-        "FollowerCommands_pausedAction",
-        {
-            action   = consts.actions.lockpick,
-            target   = obj,
-            follower = selectedFollower,
-            destPos  = destPos,
-            player   = self,
-        }
-    )
-end
-
-local function commandUntrap(followers, obj)
-    lastCommand = consts.actions.untrap
-    local selectedFollower, bestScore = followerPicker.pickprobe(followers, types.Probe)
-
-    if bestScore == 0 then
-        self:sendEvent("ShowMessage", { message = "Seems like no one has any probes." })
-        return
-    end
-
-    occupiedObjects[obj.id] = true
-    occupiedFollowers[selectedFollower.id] = true
-
-    local destPos = nearby.findNearestNavMeshPosition(obj.position)
-    self:sendEvent("ShowMessage", { message = "Sure, I'll untrap it." })
-    resetAiPackages(selectedFollower)
-    selectedFollower:sendEvent(
-        "StartAIPackage",
-        {
-            type = "Travel",
-            destPosition = destPos,
-            cancelOther = false,
-        }
-    )
-    core.sendGlobalEvent(
-        "FollowerCommands_pausedAction",
-        {
-            action   = consts.actions.untrap,
-            target   = obj,
-            follower = selectedFollower,
-            destPos  = destPos,
-            player   = self,
-        }
-    )
-end
-
-local function commandForceUntrap(followers, obj)
-    lastCommand = consts.actions.forceUntrap
-    local selectedFollower = followerPicker.forceUntrap(followers)
-
-    if not selectedFollower then
-        self:sendEvent("ShowMessage", { message = "Seems like no one is ready to take the blow." })
-        return
-    end
-
-    if settingsCommands:get("kamikazeUntrapRefuseChance") > math.random(100) then
-        self:sendEvent("ShowMessage", { message = "No one seems keen on getting zapped by this trap." })
-        return
-    end
-
-    occupiedObjects[obj.id] = true
-
-    local destPos = nearby.findNearestNavMeshPosition(obj.position)
-    self:sendEvent("ShowMessage", { message = "Sure, bring it on." })
-    resetAiPackages(selectedFollower)
-    selectedFollower:sendEvent(
-        "StartAIPackage",
-        {
-            type = "Travel",
-            destPosition = destPos,
-            cancelOther = false,
-        }
-    )
-    core.sendGlobalEvent(
-        "FollowerCommands_pausedAction",
-        {
-            action   = consts.actions.forceUntrap,
-            target   = obj,
-            follower = selectedFollower,
-            destPos  = destPos,
-            player   = self,
-        }
-    )
+    return myFollowers
 end
 
 input.registerTriggerHandler(
@@ -210,19 +74,8 @@ input.registerTriggerHandler(
     async:callback(function()
         playCommandAnim()
 
-        -- filtering followers
-        local followerList = I.FollowerDetectionUtil.getFollowerList()
-        if not followerList or not next(followerList) then return end
-
-        local myFollowers = {}
-        for _, state in pairs(followerList) do
-            local isMyFollower = state.leader and state.leader.id == self.id
-                or state.superLeader and state.superLeader.id == self.id
-            if isMyFollower and not occupiedFollowers[state.actor.id] then
-                myFollowers[#myFollowers + 1] = state.actor
-            end
-        end
-        if not next(myFollowers) then return end
+        local myFollowers = getMyFollowers()
+        if #myFollowers == 0 then return end
 
         -- raycast
         local pos, v = camUtil.getCameraDirData(camera.getPosition(), false)
@@ -232,9 +85,11 @@ input.registerTriggerHandler(
         if not cast.hitPos then return end
 
         local obj = cast.hitObject
+        -- no object was hit
         if not obj then
-            commandTravel(myFollowers, cast.hitPos)
+            lastCommand = commands.travel(myFollowers, cast.hitPos)
             return
+            -- object was hit, but is unavailable
         elseif occupiedObjects[obj.id]
             or not obj:isValid()
             or obj.type.records[obj.recordId].mwscript
@@ -243,64 +98,64 @@ input.registerTriggerHandler(
         end
 
         -- determining the action
+        -- object classification
         local isLockable    = types.Lockable.objectIsInstance(obj)
         local isActor       = types.Actor.objectIsInstance(obj)
-        local isDead        = isActor and types.Actor.isDead(obj)
+        local isContainer   = types.Container.objectIsInstance(obj)
+        local isItem        = types.Item.objectIsInstance(obj)
 
-        local isOwned       = true -- tmp
+        -- object state
+        local isDead        = isActor and types.Actor.isDead(obj)
+        local isLocked      = isLockable and types.Lockable.isLocked(obj)
+        local isTrapped     = isLockable and types.Lockable.getTrapSpell(obj)
+
+        -- ownership permissions
+        local isOwned       = ownership.isOwned(self, obj) -- TODO
         local unlockOwned   = not isOwned or settingsCommands:get("unlockOwned")
         local lootOwned     = not isOwned or settingsCommands:get("lootOwned")
 
+        -- interaction predicates
         local hitAliveActor = isActor and not isDead
-        local hitLocked     = isLockable and types.Lockable.isLocked(obj)
-        local hitTrapped    = isLockable and types.Lockable.getTrapSpell(obj)
-        local hitContainer  = types.Container.objectIsInstance(obj) or isDead
-        local hitItem       = types.Item.objectIsInstance(obj)
-
-        local isIllegal     =
-            (hitTrapped or hitContainer and not unlockOwned)
-            or (hitItem or hitContainer and not lootOwned)
-        local forceUntrap = hitTrapped
+        local hitContainer  = isContainer or isDead
+        local isIllegal     = (isTrapped and not unlockOwned)
+            or (isContainer and not lootOwned)
+            or (isItem and not lootOwned)
+        local forceUntrap   = isTrapped
             and lastCommand == consts.actions.untrap
             and lastHitObj == obj
 
         if hitAliveActor then
-            commandCombat(myFollowers, obj)
-        elseif hitLocked then
-            commandLockpick(myFollowers, obj)
-        elseif forceUntrap then
-            commandForceUntrap(myFollowers, obj)
-        elseif hitTrapped then
-            commandUntrap(myFollowers, obj)
-        elseif hitContainer then
-
-        elseif hitItem then
-
+            lastCommand = commands.kill(myFollowers, obj)
         elseif isIllegal then
+            lastCommand = nil
             self:sendEvent("ShowMessage", { message = "Sorry m8, it's illegal." })
+        elseif isLocked then
+            lastCommand = commands.lockpick(myFollowers, obj, occupiedObjects, occupiedFollowers)
+        elseif forceUntrap then
+            lastCommand = commands.forceUntrap(myFollowers, obj,
+                occupiedObjects, occupiedFollowers, forceUntrapIgnoredObjects)
+        elseif isTrapped then
+            lastCommand = commands.untrap(myFollowers, obj, occupiedObjects, occupiedFollowers)
+        elseif hitContainer then
+            -- TODO
+        elseif isItem then
+            -- TODO
         else
-            commandTravel(myFollowers, cast.hitPos)
+            lastCommand = commands.travel(myFollowers, cast.hitPos)
         end
-        
+
         lastHitObj = obj
     end)
 )
 
--- I.AnimationController.addTextKeyHandler(
---     "",
---     function(groupname, key)
---         print(groupname, "|", key)
---     end
--- )
-
 local function onLoad(data)
     if not data then return end
-    forceUntrapIgnored = data.forceUntrapIgnored or forceUntrapIgnored
+    forceUntrapIgnoredObjects = data.forceUntrapIgnoredObjects or forceUntrapIgnoredObjects
 end
 
 local function onSave()
     return {
-        forceUntrapIgnored = forceUntrapIgnored,
+        forceUntrapIgnoredObjects = forceUntrapIgnoredObjects,
     }
 end
 

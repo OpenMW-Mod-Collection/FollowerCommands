@@ -7,6 +7,7 @@ local camera = require("openmw.camera")
 local types = require("openmw.types")
 local nearby = require("openmw.nearby")
 local anim = require("openmw.animation")
+local core = require("openmw.core")
 
 local deps = require("scripts.FollowerCommands.utils.dependencies")
 local consts = require("scripts.FollowerCommands.utils.consts")
@@ -69,6 +70,16 @@ local function getMyFollowers()
     return myFollowers
 end
 
+local function isEmpty(container)
+    local inv = container.type.inventory(container)
+    print(not inv:isResolved(), inv.resolve)
+    if not inv:isResolved() then
+        return false
+    else
+        return #container.type.inventory(container):getAll() == 0
+    end
+end
+
 input.registerTriggerHandler(
     consts.commandTriggerKey,
     async:callback(function()
@@ -81,7 +92,7 @@ input.registerTriggerHandler(
         local pos, v = camUtil.getCameraDirData(camera.getPosition(), false)
         local dist = settings:get("maxDistance")
         local destPos = (pos + v * dist)
-        local cast = nearby.castRay(pos, destPos, { ignore = { table.unpack(myFollowers), self } })
+        local cast = nearby.castRenderingRay(pos, destPos, { ignore = { table.unpack(myFollowers), self } })
         if not cast.hitPos then return end
 
         local obj = cast.hitObject
@@ -108,16 +119,17 @@ input.registerTriggerHandler(
         local isDead        = isActor and types.Actor.isDead(obj)
         local isLocked      = isLockable and types.Lockable.isLocked(obj)
         local isTrapped     = isLockable and types.Lockable.getTrapSpell(obj)
+        local isLootalbeItem = isItem and obj.type.isCarriable(obj)
 
         -- ownership permissions
-        local isOwned       = ownership.isOwned(self, obj) -- TODO
+        local isOwned       = ownership.isOwned(self, obj)
         local unlockOwned   = not isOwned or settingsCommands:get("unlockOwned")
         local lootOwned     = not isOwned or settingsCommands:get("lootOwned")
 
         -- interaction predicates
         local hitAliveActor = isActor and not isDead
-        local hitContainer  = isContainer or isDead
-        local isIllegal     = (isTrapped and not unlockOwned)
+        local hitContainer  = (isContainer or isDead) and not isEmpty(obj)
+        local isIllegal     = (isLocked and not unlockOwned)
             or (isContainer and not lootOwned)
             or (isItem and not lootOwned)
         local forceUntrap   = isTrapped
@@ -137,13 +149,19 @@ input.registerTriggerHandler(
         elseif isTrapped then
             lastCommand = commands.untrap(myFollowers, obj, occupiedObjects, occupiedFollowers)
         elseif hitContainer then
-            -- TODO
-        elseif isItem then
-            -- TODO
+            lastCommand = commands.lootContainer(myFollowers, obj, occupiedObjects, occupiedFollowers)
+        elseif isLootalbeItem then
+            lastCommand = commands.lootItem(myFollowers, obj, occupiedObjects, occupiedFollowers)
         else
             lastCommand = commands.travel(myFollowers, cast.hitPos)
         end
 
+        -- resole the inventory while actor is walking towards the container
+        if hitContainer and not obj.type.inventory(obj):isResolved() then
+            core.sendGlobalEvent("FollowerCommands_resolve", obj)
+        end
+
+        -- print(lastCommand)
         lastHitObj = obj
     end)
 )
@@ -159,6 +177,13 @@ local function onSave()
     }
 end
 
+-- I.AnimationController.addTextKeyHandler(
+--     "",
+--     function(groupname, key)
+--         print(groupname, "|", key)
+--     end
+-- )
+
 return {
     engineHandlers = {
         onLoad = onLoad,
@@ -168,6 +193,9 @@ return {
         FollowerCommands_objectFreed = function(data)
             occupiedObjects[data.target.id] = nil
             occupiedFollowers[data.follower.id] = nil
-        end
+        end,
+        FollowerCommands_triggerCommand = function()
+            input.activateTrigger(consts.commandTriggerKey)
+        end,
     }
 }

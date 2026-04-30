@@ -1,6 +1,8 @@
-local world = require("openmw.world")
-
 local consts = require("scripts.FollowerCommands.utils.consts")
+
+local function triggerCommand(player)
+    player:sendEvent("FollowerCommands_triggerCommand")
+end
 
 local function pausedAction(data)
     local script = consts.customScripts[data.action]
@@ -36,12 +38,27 @@ local function untrap(obj)
     obj.type.setTrapSpell(obj)
 end
 
+local function lootItems(data)
+    for _, item in ipairs(data.items) do
+        if item.count > 0 then
+            item:moveInto(data.actor)
+        end
+    end
+end
+
+local function resolve(obj)
+    obj.type.inventory(obj):resolve()
+end
+
 return {
     eventHandlers = {
+        FollowerCommands_triggerCommand = triggerCommand,
         FollowerCommands_pausedAction = pausedAction,
         FollowerCommands_detachScript = detachScript,
         FollowerCommands_modifyPickprobeCondition = onModifyPickprobeCondition,
         FollowerCommands_unlock = unlock,
         FollowerCommands_untrap = untrap,
+        FollowerCommands_resolve = resolve,
+        FollowerCommands_lootItems = lootItems,
     },
 }

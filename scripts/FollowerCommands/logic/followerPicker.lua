@@ -1,7 +1,11 @@
 local types = require("openmw.types")
 local storage = require("openmw.storage")
+local core = require("openmw.core")
+local ui = require("openmw.ui")
 
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
+
+local fEncumbranceStrMult = core.getGMST("fEncumbranceStrMult")
 
 local picker = {}
 
@@ -13,11 +17,14 @@ local picker = {}
 ---@return GameObject|nil
 ---@return integer
 picker.pickprobe = function(followers, opts)
+    local isLockpick = opts.type == types.Lockpick
     local selectedFollower
     local biggestCount = 0
     local bestScore = 0
     for _, follower in ipairs(followers) do
-        if not types.NPC.objectIsInstance(follower) then goto continue end
+        if not types.NPC.objectIsInstance(follower) then
+            goto continue
+        end
 
         local pickprobes = follower.type.inventory(follower):getAll(opts.type)
         if not pickprobes then goto continue end
@@ -46,7 +53,21 @@ picker.pickprobe = function(followers, opts)
 
         ::continue::
     end
+
+    if not selectedFollower then
+        ui.showMessage(
+            isLockpick
+            and "Seems like no one has any lockpicks."
+            or "Seems like no one has any probes."
+        )
+    end
+
     return selectedFollower, bestScore
+end
+
+local function isSummon(recordId)
+    return string.find(recordId, "_summon$")
+        or recordId == "bonewalker_greater_summ"
 end
 
 ---@param followers GameObject[]
@@ -55,17 +76,81 @@ picker.forceUntrap = function(followers)
     local selectedFollower
     local highestHP = settingsCommands:get("kamikazeUntrapMinHealth")
     for _, follower in ipairs(followers) do
+        -- summons are disposable
+        if isSummon(follower.recordId) then
+            return follower
+        end
+
         local health = follower.type.stats.dynamic.health(follower)
         if health.current >= highestHP then
             highestHP = health.current
             selectedFollower = follower
         end
     end
+
+    if not selectedFollower then
+        ui.showMessage("Seems like no one is ready to take the blow.")
+    end
+
     return selectedFollower
 end
 
-picker.loot = function(followers, obj)
+---@class PickprobeOptions
+---@field target GameObject
 
+---@param followers GameObject[]
+---@param opts PickprobeOptions
+---@return GameObject|nil, number
+picker.loot = function(followers, opts)
+    local selectedFollower
+    local biggestCarry = 0
+    local totalObjWeight = 0
+    local lightestItemWeight = 2 ^ 53
+    local cantCarryAll = false
+
+    if types.Item.objectIsInstance(opts.target) then
+        totalObjWeight = opts.target.type.records[opts.target.recordId].weight
+    else
+        local inv = opts.target.type.inventory(opts.target)
+        if inv:isResolved() then
+            for _, item in ipairs(inv:getAll()) do
+                local record = item.type.records[item.recordId]
+                totalObjWeight = totalObjWeight + record.weight
+                if record.weight < lightestItemWeight then
+                    lightestItemWeight = record.weight
+                end
+            end
+        end
+    end
+
+    for _, follower in ipairs(followers) do
+        if not types.NPC.objectIsInstance(follower) then
+            goto continue
+        end
+
+        local encumbrance = follower.type.getEncumbrance(follower)
+        local strength = follower.type.stats.attributes.strength(follower)
+        local freeSpace = strength.modified * fEncumbranceStrMult - encumbrance
+        if freeSpace >= totalObjWeight then
+            biggestCarry = freeSpace - totalObjWeight
+            selectedFollower = follower
+            break
+        elseif freeSpace >= lightestItemWeight and freeSpace < biggestCarry then
+            biggestCarry = freeSpace
+            selectedFollower = follower
+            cantCarryAll = true
+        end
+
+        ::continue::
+    end
+
+    if not selectedFollower then
+        ui.showMessage("No one seems to have free space for it.")
+    elseif cantCarryAll then
+        ui.showMessage("Sure, but I won't be able to carry all of it.")
+    end
+
+    return selectedFollower, biggestCarry
 end
 
 return picker

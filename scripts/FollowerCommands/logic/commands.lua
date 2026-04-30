@@ -43,27 +43,22 @@ commands.travel = function(followers, pos)
 end
 
 --- @class InteractOptions
---- @field action         string        consts.actions constant that identifies this command
+--- @field action         string
 --- @field pickFn         fun(followers: GameObject[], opts: table|nil): GameObject, number
 --- @field pickOpts       table|nil
---- @field noFollowerMsg  string        Message shown when no suitable follower is found
---- @field confirmMsg     string        Message shown when a follower accepts the task
+--- @field confirmMsg     string
 --- @field checkScoreFn   nil|fun(bestScore: number, obj: GameObject): boolean
 --- @field lockFollower   boolean|nil
 --- @field lockObject     boolean|nil
 
---- @param followers          GameObject[]        List of follower objects
---- @param obj                GameObject          The world object to interact with
+--- @param followers          GameObject[]
+--- @param obj                GameObject
 --- @param occupiedObjects    table<number, boolean>
 --- @param occupiedFollowers  table<number, boolean>
---- @param opts               InteractOptions  Behaviour options (see above)
+--- @param opts               InteractOptions
 local function commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, opts)
     local selectedFollower, bestScore = opts.pickFn(followers, opts.pickOpts)
-
-    if bestScore == 0 then
-        self:sendEvent("ShowMessage", { message = opts.noFollowerMsg })
-        return
-    end
+    if not selectedFollower then return end
 
     if opts.checkScoreFn and not opts.checkScoreFn(bestScore, obj) then
         return
@@ -95,8 +90,9 @@ local function checkIfUnlockable(bestScore, obj)
     local minScore = settingsCommands:get("minUnlockChance")
     if bestScore - obj.type.getLockLevel(obj) < minScore then
         self:sendEvent("ShowMessage", { message = "Seems like the lock is too complex." })
-        return
+        return false
     end
+    return true
 end
 
 commands.lockpick = function(followers, obj, occupiedObjects, occupiedFollowers)
@@ -105,7 +101,6 @@ commands.lockpick = function(followers, obj, occupiedObjects, occupiedFollowers)
         action        = action,
         pickFn        = followerPicker.pickprobe,
         pickOpts      = { type = types.Lockpick },
-        noFollowerMsg = "Seems like no one has any lockpicks.",
         confirmMsg    = "Sure, I'll unlock it.",
         checkScoreFn  = checkIfUnlockable,
         lockFollower  = true,
@@ -120,7 +115,6 @@ commands.untrap = function(followers, obj, occupiedObjects, occupiedFollowers)
         action        = action,
         pickFn        = followerPicker.pickprobe,
         pickOpts      = { type = types.Probe },
-        noFollowerMsg = "Seems like no one has any probes.",
         confirmMsg    = "Sure, I'll untrap it.",
         lockFollower  = true,
         lockObject    = true,
@@ -139,12 +133,37 @@ commands.forceUntrap = function(followers, obj, occupiedObjects, occupiedFollowe
         commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
             action        = action,
             pickFn        = followerPicker.forceUntrap,
-            noFollowerMsg = "Seems like no one is ready to take the blow.",
             confirmMsg    = "Sure, bring it on.",
             lockObject    = true,
         })
     end
 
+    return action
+end
+
+commands.lootContainer = function(followers, obj, occupiedObjects, occupiedFollowers)
+    local action = consts.actions.lootContainer
+    commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
+        action        = action,
+        pickFn        = followerPicker.loot,
+        pickOpts      = { target = obj },
+        confirmMsg    = "On my way.",
+        lockFollower  = true,
+        lockObject    = true,
+    })
+    return action
+end
+
+commands.lootItem = function(followers, obj, occupiedObjects, occupiedFollowers)
+    local action = consts.actions.lootItem
+    commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
+        action        = action,
+        pickFn        = followerPicker.loot,
+        pickOpts      = { target = obj },
+        confirmMsg    = "On my way.",
+        lockFollower  = true,
+        lockObject    = true,
+    })
     return action
 end
 

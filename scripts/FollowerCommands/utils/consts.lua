@@ -51,4 +51,31 @@ C.customScripts = {
     [C.actions.lootItem]      = "scripts/FollowerCommands/customScripts/loot.lua",
 }
 
+C.headHeight = .9
+C.footHeight = .2
+
+C.messageTypes = {
+    unlockSuccess      = "unlockSuccess",
+    untrapFail         = "untrapFail",
+    lockpickConfirm    = "lockpickConfirm",
+    noLockpicks        = "noLockpicks",
+
+    unlockFail         = "unlockFail",
+    untrapSuccess      = "untrapSuccess",
+    lockTooComplex     = "lockTooComplex",
+    untrapConfirm      = "untrapConfirm",
+    noProbes           = "noProbes",
+
+    forceUntrapRefuse  = "forceUntrapRefuse",
+    forceUntrapConfirm = "forceUntrapConfirm",
+    noForceUntrap      = "noForceUntrap",
+
+    cantReach          = "cantReach",
+    lootConfirm        = "lootConfirm",
+    noFreeSpace        = "noFreeSpace",
+    notEnoughFreeSpace = "notEnoughFreeSpace",
+
+    illegal            = "illegal",
+}
+
 return C

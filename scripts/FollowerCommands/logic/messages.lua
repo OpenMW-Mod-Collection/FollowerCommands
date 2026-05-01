@@ -1,4 +1,5 @@
 local core = require("openmw.core")
+local types = require("openmw.types")
 
 local l10n = core.l10n("FollowerCommands_messages")
 
@@ -23,8 +24,23 @@ end
 
 messages.show = function(player, follower, messageType)
     if type(follower) == "table" then
-        follower = follower[math.random(#follower)]
+        local speaker
+        for _, actor in ipairs(follower) do
+            -- creatures don't speak
+            if types.NPC.objectIsInstance(actor) then
+                speaker = actor
+                break
+            end
+        end
+        if not speaker then
+            return
+        end
+        follower = speaker
+        -- creatures don't speak
+    elseif types.Creature.objectIsInstance(follower) then
+        return
     end
+
     local msg = pickRandomMessage(follower, messageType)
     player:sendEvent("ShowMessage", { message = msg })
 end

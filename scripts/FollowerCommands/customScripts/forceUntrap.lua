@@ -7,6 +7,7 @@ local types = require("openmw.types")
 local target
 local action
 local player
+local isCreature
 
 local onUpdateFired = false
 
@@ -46,22 +47,36 @@ local function freeSelf()
     )
 end
 
-I.AnimationController.addTextKeyHandler(
-    "handtohand",
-    function(groupname, key)
-        if key == "slash hit" then
-            applyTrapFancy(target.type.getTrapSpell(target))
-            core.sendGlobalEvent("FollowerCommands_untrap", target)
-        elseif key == "slash large follow stop" then
-            freeSelf()
-        end
-    end
-)
-
 local function onInit(data)
     action = data.action
     target = data.target
     player = data.player
+    isCreature = types.Creature.objectIsInstance(self)
+
+    if isCreature then
+        I.AnimationController.addTextKeyHandler(
+            "attack1",
+            function(groupname, key)
+                if key == "stop" then
+                    applyTrapFancy(target.type.getTrapSpell(target))
+                    core.sendGlobalEvent("FollowerCommands_untrap", target)
+                    freeSelf()
+                end
+            end
+        )
+    else
+        I.AnimationController.addTextKeyHandler(
+            "handtohand",
+            function(groupname, key)
+                if key == "slash hit" then
+                    applyTrapFancy(target.type.getTrapSpell(target))
+                    core.sendGlobalEvent("FollowerCommands_untrap", target)
+                elseif key == "slash large follow stop" then
+                    freeSelf()
+                end
+            end
+        )
+    end
 end
 
 local function onUpdate(dt)
@@ -71,14 +86,25 @@ local function onUpdate(dt)
 
     onUpdateFired = true
     self:enableAI(false)
-    I.AnimationController.playBlendedAnimation(
-        "handtohand",
-        {
-            startKey = 'equip start',
-            stopKey = 'slash large follow stop',
-            priority = anim.PRIORITY.Scripted,
-        }
-    )
+    if isCreature then
+        I.AnimationController.playBlendedAnimation(
+            "attack1",
+            {
+                startKey = 'start',
+                stopKey = 'stop',
+                priority = anim.PRIORITY.Scripted,
+            }
+        )
+    else
+        I.AnimationController.playBlendedAnimation(
+            "handtohand",
+            {
+                startKey = 'equip start',
+                stopKey = 'slash large follow stop',
+                priority = anim.PRIORITY.Scripted,
+            }
+        )
+    end
 end
 
 local function onLoad(data)
@@ -86,6 +112,7 @@ local function onLoad(data)
     target = data.target or target
     action = data.action or action
     player = data.player or player
+    isCreature = data.isCreature or isCreature
 end
 
 local function onSave()
@@ -93,6 +120,7 @@ local function onSave()
         target = target,
         action = action,
         player = player,
+        isCreature = isCreature,
     }
 end
 

@@ -6,3 +6,4 @@ CUSTOM: scripts/FollowerCommands/customScripts/forceUntrap.lua
 CUSTOM: scripts/FollowerCommands/customScripts/loot.lua
 
 MENU: scripts/FollowerCommands/settingsMenu.lua
+GLOBAL: scripts/FollowerCommands/settingsGlobal.lua

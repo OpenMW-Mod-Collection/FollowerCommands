@@ -15,7 +15,6 @@ kcommand02: Two waves
 kcommand03: Nicolas Cage
 kcommand04: King-like
 kcommand_random: Random
-enableMessages_name: Enable Messages
 
 commands_groupName: Commands
 unlockOwned_name: Unlock Owned
@@ -31,6 +30,9 @@ kamikazeUntrapMinHealth_desc: >
   If no probes are found, the healthiest follower will face tank the trap.
   Requires 2 consecutive commands.
 kamikazeUntrapRefuseChance_name: Chance to Refuse Kamikaze Untrap (%)
+
+debug_groupName: Debug
+enableMessages_name: Enable Messages
 
 
 

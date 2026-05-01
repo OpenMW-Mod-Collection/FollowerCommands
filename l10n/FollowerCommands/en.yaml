@@ -15,6 +15,7 @@ kcommand02: Two waves
 kcommand03: Nicolas Cage
 kcommand04: King-like
 kcommand_random: Random
+enableMessages_name: Enable Messages
 
 commands_groupName: Commands
 unlockOwned_name: Unlock Owned

@@ -32,6 +32,7 @@ Don't let me down.
 
 - [Actor Interactions](https://www.nexusmods.com/morrowind/mods/57955) by Implawyer - Since not every companion has Companion Share feature, whitout this mod some of them might not give loot back to you
 - [Friendlier Fire](https://www.nexusmods.com/morrowind/mods/57975) by me
+- [Disobedient Summons](https://www.nexusmods.com/morrowind/mods/58542) by me
 
 ## Credits
 

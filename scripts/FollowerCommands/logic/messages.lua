@@ -1,6 +1,8 @@
 local core = require("openmw.core")
 local types = require("openmw.types")
+local storage = require("openmw.storage")
 
+local settings = storage.playerSection("SettingsFollowerCommands_settings")
 local l10n = core.l10n("FollowerCommands_messages")
 
 local messages = {}
@@ -23,6 +25,8 @@ local function pickRandomMessage(follower, messageType)
 end
 
 messages.show = function(player, follower, messageType)
+    if not settings:get("enableMessages") then return end
+    
     if type(follower) == "table" then
         local speaker
         for _, actor in ipairs(follower) do

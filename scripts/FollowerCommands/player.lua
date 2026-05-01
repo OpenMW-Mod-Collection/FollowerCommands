@@ -14,6 +14,7 @@ local consts = require("scripts.FollowerCommands.utils.consts")
 local camUtil = require("scripts.FollowerCommands.utils.camera")
 local ownership = require("scripts.FollowerCommands.logic.ownership")
 local commands = require("scripts.FollowerCommands.logic.commands")
+local messages = require("scripts.FollowerCommands.logic.messages")
 
 local settings = storage.playerSection("SettingsFollowerCommands_settings")
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
@@ -140,7 +141,7 @@ input.registerTriggerHandler(
             lastCommand = commands.kill(myFollowers, obj)
         elseif isIllegal then
             lastCommand = nil
-            self:sendEvent("ShowMessage", { message = "Sorry m8, it's illegal." })
+            messages.show(self, myFollowers, consts.messageTypes.illegal)
         elseif isLocked then
             lastCommand = commands.lockpick(myFollowers, obj, occupiedObjects, occupiedFollowers)
         elseif forceUntrap then

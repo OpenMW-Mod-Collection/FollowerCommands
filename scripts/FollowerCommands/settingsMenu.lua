@@ -102,7 +102,6 @@ I.Settings.registerGroup {
         {
             key = 'kamikazeUntrapRefuseChance',
             name = 'kamikazeUntrapRefuseChance_name',
-            description = "kamikazeUntrapRefuseChance_desc",
             renderer = 'number',
             default = 25,
         },

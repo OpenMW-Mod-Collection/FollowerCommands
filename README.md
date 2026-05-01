@@ -2,6 +2,11 @@
 
 Adds a hotkey to give followers commands based on what you're looking at.
 
+<p align="center">
+  <img src="media/demo_loot.gif">
+  <img src="media/demo_lockpick.gif">
+</p>
+
 ## Commands
 
 They're based on what you're looking at.

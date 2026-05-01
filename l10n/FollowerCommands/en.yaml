@@ -23,10 +23,13 @@ unlockOwned_desc: >
   Either RP or abuse it.
   It's your game, after all.
 lootOwned_name: Loot Owned
+minUnlockChance_name: Min Unlock Chance (%)
+minUnlockChance_desc: Lock is considered too complex if success chance is lower than this value.
 kamikazeUntrapMinHealth_name: Min Health for Kamikaze Untrap
-kamikazeUntrap_desc: >
+kamikazeUntrapMinHealth_desc: >
   If no probes are found, the healthiest follower will face tank the trap.
   Requires 2 consecutive commands.
+kamikazeUntrapRefuseChance_name: Chance to Refuse Kamikaze Untrap (%)
 
 
 

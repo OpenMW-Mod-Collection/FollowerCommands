@@ -5,6 +5,8 @@ local anim = require("openmw.animation")
 local types = require("openmw.types")
 
 local consts = require("scripts.FollowerCommands.utils.consts")
+local messages = require("scripts.FollowerCommands.logic.messages")
+
 
 local isUntrapping
 ---@type GameObject
@@ -127,16 +129,16 @@ I.AnimationController.addTextKeyHandler(
         if key ~= "stop" then return end
         if success then
             freeSelf()
-            local msg = isUntrapping
-                and "Untrapped!"
-                or "Unlocked!"
-            player:sendEvent("ShowMessage", { message = msg })
+            local msgType = isUntrapping
+                and consts.messageTypes.untrapSuccess
+                or consts.messageTypes.unlockSuccess
+            messages.show(player, self, msgType)
         elseif failure then
             freeSelf()
-            local msg = isUntrapping
-                and "Sorry, couldn't untrap it."
-                or "Sorry, couldn't unlock it."
-            player:sendEvent("ShowMessage", { message = msg })
+            local msgType = isUntrapping
+                and consts.messageTypes.untrapFail
+                or consts.messageTypes.unlockFail
+            messages.show(player, self, msgType)
         else
             tryPickprobing()
         end

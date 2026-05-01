@@ -55,14 +55,14 @@ C.headHeight = .9
 C.footHeight = .2
 
 C.messageTypes = {
+    unlockFail         = "unlockFail",
     unlockSuccess      = "unlockSuccess",
-    untrapFail         = "untrapFail",
+    lockTooComplex     = "lockTooComplex",
     lockpickConfirm    = "lockpickConfirm",
     noLockpicks        = "noLockpicks",
 
-    unlockFail         = "unlockFail",
+    untrapFail         = "untrapFail",
     untrapSuccess      = "untrapSuccess",
-    lockTooComplex     = "lockTooComplex",
     untrapConfirm      = "untrapConfirm",
     noProbes           = "noProbes",
 

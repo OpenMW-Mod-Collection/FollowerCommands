@@ -39,9 +39,13 @@ local function untrap(obj)
 end
 
 local function lootItems(data)
-    for _, item in ipairs(data.items) do
-        if item.count > 0 then
-            item:moveInto(data.actor)
+    for _, itemData in ipairs(data.items) do
+        if itemData.item.count > 0 then
+            local pickedItem = itemData.item
+            if pickedItem.count > itemData.count then
+                pickedItem = pickedItem:split(itemData.count)
+            end
+            pickedItem:moveInto(data.actor)
         end
     end
 end

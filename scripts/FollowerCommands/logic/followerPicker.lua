@@ -1,7 +1,10 @@
 local types = require("openmw.types")
 local storage = require("openmw.storage")
 local core = require("openmw.core")
-local ui = require("openmw.ui")
+local self = require("openmw.self")
+
+local consts = require("scripts.FollowerCommands.utils.consts")
+local messages = require("scripts.FollowerCommands.logic.messages")
 
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
 
@@ -55,11 +58,10 @@ picker.pickprobe = function(followers, opts)
     end
 
     if not selectedFollower then
-        ui.showMessage(
-            isLockpick
-            and "Seems like no one has any lockpicks."
-            or "Seems like no one has any probes."
-        )
+        local msgType = isLockpick
+            and consts.messageTypes.noLockpicks
+            or consts.messageTypes.noProbes
+        messages.show(self, followers, msgType)
     end
 
     return selectedFollower, bestScore
@@ -89,7 +91,7 @@ picker.forceUntrap = function(followers)
     end
 
     if not selectedFollower then
-        ui.showMessage("Seems like no one is ready to take the blow.")
+        messages.show(self, followers, consts.messageTypes.noForceUntrap)
     end
 
     return selectedFollower
@@ -145,9 +147,9 @@ picker.loot = function(followers, opts)
     end
 
     if not selectedFollower then
-        ui.showMessage("No one seems to have free space for it.")
+        messages.show(self, followers, consts.messageTypes.noFreeSpace)
     elseif cantCarryAll then
-        ui.showMessage("Sure, but I won't be able to carry all of it.")
+        messages.show(self, selectedFollower, consts.messageTypes.notEnoughFreeSpace)
     end
 
     return selectedFollower, biggestCarry

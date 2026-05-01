@@ -5,6 +5,7 @@ local nearby = require("openmw.nearby")
 local core = require("openmw.core")
 
 local consts = require("scripts.FollowerCommands.utils.consts")
+local messages = require("scripts.FollowerCommands.logic.messages")
 local followerPicker = require("scripts.FollowerCommands.logic.followerPicker")
 
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
@@ -47,7 +48,7 @@ end
 --- @field pickFn         fun(followers: GameObject[], opts: table|nil): GameObject, number
 --- @field pickOpts       table|nil
 --- @field confirmMsg     string
---- @field checkScoreFn   nil|fun(bestScore: number, obj: GameObject): boolean
+--- @field checkScoreFn   nil|fun(followers: GameObject[], bestScore: number, obj: GameObject): boolean
 --- @field lockFollower   boolean|nil
 --- @field lockObject     boolean|nil
 
@@ -60,7 +61,7 @@ local function commandInteractWithObject(followers, obj, occupiedObjects, occupi
     local selectedFollower, bestScore = opts.pickFn(followers, opts.pickOpts)
     if not selectedFollower then return end
 
-    if opts.checkScoreFn and not opts.checkScoreFn(bestScore, obj) then
+    if opts.checkScoreFn and not opts.checkScoreFn(followers, bestScore, obj) then
         return
     end
 
@@ -68,7 +69,7 @@ local function commandInteractWithObject(followers, obj, occupiedObjects, occupi
     occupiedFollowers[selectedFollower.id] = opts.lockFollower
 
     local destPos = nearby.findNearestNavMeshPosition(obj.position)
-    self:sendEvent("ShowMessage", { message = opts.confirmMsg })
+    messages.show(self, followers, opts.confirmMsg)
     resetAiPackages(selectedFollower)
     selectedFollower:sendEvent("StartAIPackage", {
         type         = "Travel",
@@ -86,10 +87,10 @@ local function commandInteractWithObject(followers, obj, occupiedObjects, occupi
     })
 end
 
-local function checkIfUnlockable(bestScore, obj)
+local function checkIfUnlockable(followers, bestScore, obj)
     local minScore = settingsCommands:get("minUnlockChance")
     if bestScore - obj.type.getLockLevel(obj) < minScore then
-        self:sendEvent("ShowMessage", { message = "Seems like the lock is too complex." })
+        messages.show(self, followers, consts.messageTypes.lockTooComplex)
         return false
     end
     return true
@@ -101,7 +102,7 @@ commands.lockpick = function(followers, obj, occupiedObjects, occupiedFollowers)
         action        = action,
         pickFn        = followerPicker.pickprobe,
         pickOpts      = { type = types.Lockpick },
-        confirmMsg    = "Sure, I'll unlock it.",
+        confirmMsg    = consts.messageTypes.lockpickConfirm,
         checkScoreFn  = checkIfUnlockable,
         lockFollower  = true,
         lockObject    = true,
@@ -115,7 +116,7 @@ commands.untrap = function(followers, obj, occupiedObjects, occupiedFollowers)
         action        = action,
         pickFn        = followerPicker.pickprobe,
         pickOpts      = { type = types.Probe },
-        confirmMsg    = "Sure, I'll untrap it.",
+        confirmMsg    = consts.messageTypes.untrapConfirm,
         lockFollower  = true,
         lockObject    = true,
     })
@@ -128,12 +129,12 @@ commands.forceUntrap = function(followers, obj, occupiedObjects, occupiedFollowe
     local refused = settingsCommands:get("kamikazeUntrapRefuseChance") > math.random(100)
     if forceUntrapIgnoredObjects[obj.id] or refused then
         forceUntrapIgnoredObjects[obj.id] = true
-        self:sendEvent("ShowMessage", { message = "No one seems keen on getting zapped by this trap." })
+        messages.show(self, followers, consts.messageTypes.forceUntrapRefuse)
     else
         commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
             action        = action,
             pickFn        = followerPicker.forceUntrap,
-            confirmMsg    = "Sure, bring it on.",
+            confirmMsg    = consts.messageTypes.forceUntrapConfirm,
             lockObject    = true,
         })
     end
@@ -147,7 +148,7 @@ commands.lootContainer = function(followers, obj, occupiedObjects, occupiedFollo
         action        = action,
         pickFn        = followerPicker.loot,
         pickOpts      = { target = obj },
-        confirmMsg    = "On my way.",
+        confirmMsg    = consts.messageTypes.lootConfirm,
         lockFollower  = true,
         lockObject    = true,
     })
@@ -160,7 +161,7 @@ commands.lootItem = function(followers, obj, occupiedObjects, occupiedFollowers)
         action        = action,
         pickFn        = followerPicker.loot,
         pickOpts      = { target = obj },
-        confirmMsg    = "On my way.",
+        confirmMsg    = consts.messageTypes.lootConfirm,
         lockFollower  = true,
         lockObject    = true,
     })

@@ -5,6 +5,7 @@ local anim = require("openmw.animation")
 local util = require("openmw.util")
 
 local consts = require("scripts.FollowerCommands.utils.consts")
+local messages = require("scripts.FollowerCommands.logic.messages")
 
 local iMaxActivateDist = core.getGMST("iMaxActivateDist") + 0.1
 local fEncumbranceStrMult = core.getGMST("fEncumbranceStrMult")
@@ -47,6 +48,18 @@ local function isAboveThreshold(actor, pos, threshold)
     return t > threshold
 end
 
+local function lootStack(freeSpace, item)
+    local record = item.type.records[item.recordId]
+    local count = item.count
+    local weight = record.weight
+
+    if freeSpace >= count * weight then
+        return count, weight
+    else
+        return math.floor(freeSpace / weight), weight
+    end
+end
+
 local function lootContainer()
     local encumbrance = self.type.getEncumbrance(self)
     local strength = self.type.stats.attributes.strength(self)
@@ -57,10 +70,10 @@ local function lootContainer()
 
     local lootedItems = {}
     for _, item in ipairs(inv:getAll()) do
-        local record = item.type.records[item.recordId]
-        freeSpace = freeSpace - record.weight
+        local lootableStack, weight = lootStack(freeSpace, item)
+        freeSpace = freeSpace - lootableStack * weight
         if freeSpace > 0 then
-            lootedItems[#lootedItems + 1] = item
+            lootedItems[#lootedItems + 1] = { item = item, count = lootableStack }
         end
     end
 
@@ -104,7 +117,7 @@ local function onUpdate(dt)
     local headPos = getHeadPosition(self)
     if (headPos - target:getBoundingBox().center):length() > reach then
         freeSelf()
-        player:sendEvent("ShowMessage", { message = "Nope, can't reach it." })
+        messages.show(player, self, consts.messageTypes.cantReach)
         return
     end
 
@@ -116,9 +129,14 @@ local function onUpdate(dt)
         function(groupname, key)
             if key == "attach" then
                 if isItem then
+                    local encumbrance = self.type.getEncumbrance(self)
+                    local strength = self.type.stats.attributes.strength(self)
+                    local freeSpace = strength.modified * fEncumbranceStrMult - encumbrance
+                    local lootableStack, _ = lootStack(freeSpace, target)
+                    local lootedItems = { { item = target, count = lootableStack } }
                     core.sendGlobalEvent(
                         "FollowerCommands_lootItems",
-                        { actor = self, items = { target } }
+                        { actor = self, items = lootedItems }
                     )
                 else
                     lootContainer()

@@ -102,10 +102,7 @@ input.registerTriggerHandler(
             lastCommand = commands.travel(myFollowers, cast.hitPos)
             return
             -- object was hit, but is unavailable
-        elseif occupiedObjects[obj.id]
-            or not obj:isValid()
-            or obj.type.records[obj.recordId].mwscript
-        then
+        elseif occupiedObjects[obj.id] or not obj:isValid() then
             return
         end
 
@@ -117,10 +114,11 @@ input.registerTriggerHandler(
         local isItem        = types.Item.objectIsInstance(obj)
 
         -- object state
+        local isScripted = obj.type.records[obj.recordId].mwscript
         local isDead        = isActor and types.Actor.isDead(obj)
         local isLocked      = isLockable and types.Lockable.isLocked(obj)
         local isTrapped     = isLockable and types.Lockable.getTrapSpell(obj)
-        local isLootalbeItem = isItem and obj.type.isCarriable(obj)
+        local isLootalbeItem = isItem and obj.type.isCarriable(obj) and not isScripted
 
         -- ownership permissions
         local isOwned       = ownership.isOwned(self, obj)
@@ -129,7 +127,9 @@ input.registerTriggerHandler(
 
         -- interaction predicates
         local hitAliveActor = isActor and not isDead
-        local hitContainer  = (isContainer or isDead) and not isEmpty(obj)
+        local hitContainer  = (isContainer or isDead)
+            and not isEmpty(obj)
+            and not isScripted
         local isIllegal     = (isLocked and not unlockOwned)
             or (isContainer and not lootOwned)
             or (isItem and not lootOwned)

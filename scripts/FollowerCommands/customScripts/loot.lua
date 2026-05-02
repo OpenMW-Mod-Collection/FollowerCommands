@@ -103,7 +103,10 @@ local function onInit(data)
 end
 
 local function onUpdate(dt)
-    if onUpdateFired or I.AI.getActivePackage().type ~= "Follow" then
+    if onUpdateFired
+        or not I.AI.getActivePackage()
+        or I.AI.getActivePackage().type ~= "Follow"
+    then
         return
     end
 

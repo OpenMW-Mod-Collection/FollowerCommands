@@ -1,5 +1,9 @@
 # Follower Commands (OpenMW)
 
+## 1.1
+
+- Unlock and untrap commands now support their GMST modifiers
+
 ## 1.0.2
 
 - Fixed actors with scripts not being targettable

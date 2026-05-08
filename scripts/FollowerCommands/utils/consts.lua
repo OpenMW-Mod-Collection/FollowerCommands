@@ -63,6 +63,7 @@ C.messageTypes = {
 
     untrapFail         = "untrapFail",
     untrapSuccess      = "untrapSuccess",
+    trapTooComplex     = "trapTooComplex",
     untrapConfirm      = "untrapConfirm",
     noProbes           = "noProbes",
 

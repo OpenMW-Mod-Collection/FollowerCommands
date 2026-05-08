@@ -6,7 +6,10 @@ local types = require("openmw.types")
 
 local consts = require("scripts.FollowerCommands.utils.consts")
 local messages = require("scripts.FollowerCommands.logic.messages")
+local spellUtils = require("scripts.FollowerCommands.utils.spells")
 
+local fPickLockMult = core.getGMST("fPickLockMult")
+local fTrapCostMult = core.getGMST("fTrapCostMult")
 
 local isUntrapping
 ---@type GameObject
@@ -68,7 +71,16 @@ local function tryPickprobing()
     local statMod = security.modified
         + agility.modified / 5
         + luck.modified / 10
-    local lockLevel = isUntrapping and 0 or target.type.getLockLevel(target)
+
+    local lockLevel
+    if isUntrapping then
+        local spellId = target.type.getTrapSpell(target).id
+        local spellCost = spellUtils.getBaseSpellCost(spellId, false)
+        lockLevel = spellCost * fTrapCostMult
+    else
+        lockLevel = target.type.getLockLevel(target) * fPickLockMult
+    end
+
     local chance = quality * statMod - lockLevel
     success = chance >= 100 or chance >= math.random(0, 100)
 

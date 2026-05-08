@@ -28,11 +28,16 @@ Don't let me down.
 
 - [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053)
 
+## Incompatible Mods
+
+- [SHOP - Store and House Owner Patrol - Thieving Stealing Stealth AI Overhaul](https://www.nexusmods.com/morrowind/mods/57747)
+
 ## Recommended mods
 
-- [Actor Interactions](https://www.nexusmods.com/morrowind/mods/57955) by Implawyer - Since not every companion has Companion Share feature, whitout this mod some of them might not give loot back to you
+- [Actor Interactions](https://www.nexusmods.com/morrowind/mods/57955) by Implawyer - Since not every companion has Companion Share feature, without this mod some of them might not give loot back to you :D
 - [Friendlier Fire](https://www.nexusmods.com/morrowind/mods/57975) by me
 - [Disobedient Summons](https://www.nexusmods.com/morrowind/mods/58542) by me
+- [Fair Care](https://www.nexusmods.com/morrowind/mods/55293) by mym
 
 ## Credits
 

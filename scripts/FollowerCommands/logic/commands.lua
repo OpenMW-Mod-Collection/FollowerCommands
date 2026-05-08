@@ -7,8 +7,11 @@ local core = require("openmw.core")
 local consts = require("scripts.FollowerCommands.utils.consts")
 local messages = require("scripts.FollowerCommands.logic.messages")
 local followerPicker = require("scripts.FollowerCommands.logic.followerPicker")
+local spellUtils = require("scripts.FollowerCommands.utils.spells")
 
 local settingsCommands = storage.playerSection("SettingsFollowerCommands_commands")
+local fPickLockMult = core.getGMST("fPickLockMult")
+local fTrapCostMult = core.getGMST("fTrapCostMult")
 
 local commands = {}
 
@@ -89,7 +92,8 @@ end
 
 local function checkIfUnlockable(followers, bestScore, obj)
     local minScore = settingsCommands:get("minUnlockChance")
-    if bestScore - obj.type.getLockLevel(obj) < minScore then
+    local lockDifficulty = obj.type.getLockLevel(obj) * fPickLockMult
+    if bestScore - lockDifficulty < minScore then
         messages.show(self, followers, consts.messageTypes.lockTooComplex)
         return false
     end
@@ -99,26 +103,39 @@ end
 commands.lockpick = function(followers, obj, occupiedObjects, occupiedFollowers)
     local action = consts.actions.lockpick
     commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
-        action        = action,
-        pickFn        = followerPicker.pickprobe,
-        pickOpts      = { type = types.Lockpick },
-        confirmMsg    = consts.messageTypes.lockpickConfirm,
-        checkScoreFn  = checkIfUnlockable,
-        lockFollower  = true,
-        lockObject    = true,
+        action       = action,
+        pickFn       = followerPicker.pickprobe,
+        pickOpts     = { type = types.Lockpick },
+        confirmMsg   = consts.messageTypes.lockpickConfirm,
+        checkScoreFn = checkIfUnlockable,
+        lockFollower = true,
+        lockObject   = true,
     })
     return action
+end
+
+local function checkIfUntrappable(followers, bestScore, obj)
+    local minScore = settingsCommands:get("minUnlockChance")
+    local spellId = obj.type.getTrapSpell(obj).id
+    local spellCost = spellUtils.getBaseSpellCost(spellId, false)
+    local trapDifficulty = spellCost * fTrapCostMult
+    if bestScore - trapDifficulty < minScore then
+        messages.show(self, followers, consts.messageTypes.trapTooComplex)
+        return false
+    end
+    return true
 end
 
 commands.untrap = function(followers, obj, occupiedObjects, occupiedFollowers)
     local action = consts.actions.untrap
     commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
-        action        = action,
-        pickFn        = followerPicker.pickprobe,
-        pickOpts      = { type = types.Probe },
-        confirmMsg    = consts.messageTypes.untrapConfirm,
-        lockFollower  = true,
-        lockObject    = true,
+        action       = action,
+        pickFn       = followerPicker.pickprobe,
+        pickOpts     = { type = types.Probe },
+        confirmMsg   = consts.messageTypes.untrapConfirm,
+        checkScoreFn = checkIfUntrappable,
+        lockFollower = true,
+        lockObject   = true,
     })
     return action
 end
@@ -132,10 +149,10 @@ commands.forceUntrap = function(followers, obj, occupiedObjects, occupiedFollowe
         messages.show(self, followers, consts.messageTypes.forceUntrapRefuse)
     else
         commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
-            action        = action,
-            pickFn        = followerPicker.forceUntrap,
-            confirmMsg    = consts.messageTypes.forceUntrapConfirm,
-            lockObject    = true,
+            action     = action,
+            pickFn     = followerPicker.forceUntrap,
+            confirmMsg = consts.messageTypes.forceUntrapConfirm,
+            lockObject = true,
         })
     end
 
@@ -145,12 +162,12 @@ end
 commands.lootContainer = function(followers, obj, occupiedObjects, occupiedFollowers)
     local action = consts.actions.lootContainer
     commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
-        action        = action,
-        pickFn        = followerPicker.loot,
-        pickOpts      = { target = obj },
-        confirmMsg    = consts.messageTypes.lootConfirm,
-        lockFollower  = true,
-        lockObject    = true,
+        action       = action,
+        pickFn       = followerPicker.loot,
+        pickOpts     = { target = obj },
+        confirmMsg   = consts.messageTypes.lootConfirm,
+        lockFollower = true,
+        lockObject   = true,
     })
     return action
 end
@@ -158,12 +175,12 @@ end
 commands.lootItem = function(followers, obj, occupiedObjects, occupiedFollowers)
     local action = consts.actions.lootItem
     commandInteractWithObject(followers, obj, occupiedObjects, occupiedFollowers, {
-        action        = action,
-        pickFn        = followerPicker.loot,
-        pickOpts      = { target = obj },
-        confirmMsg    = consts.messageTypes.lootConfirm,
-        lockFollower  = true,
-        lockObject    = true,
+        action       = action,
+        pickFn       = followerPicker.loot,
+        pickOpts     = { target = obj },
+        confirmMsg   = consts.messageTypes.lootConfirm,
+        lockFollower = true,
+        lockObject   = true,
     })
     return action
 end

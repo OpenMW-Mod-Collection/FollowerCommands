@@ -1,5 +1,9 @@
 # Follower Commands (OpenMW)
 
+## 1.1.1
+
+- Fixed warning log spam
+
 ## 1.1
 
 - Unlock and untrap commands now support their GMST modifiers

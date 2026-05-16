@@ -36,7 +36,7 @@ end
 commands.travel = function(followers, pos)
     local pkg = {
         type         = "Travel",
-        destPosition = nearby.findNearestNavMeshPosition(pos),
+        destPosition = nearby.findNearestNavMeshPosition(pos) or pos,
         cancelOther  = false,
     }
     for _, follower in ipairs(followers) do
@@ -71,7 +71,7 @@ local function commandInteractWithObject(followers, obj, occupiedObjects, occupi
     occupiedObjects[obj.id] = opts.lockObject
     occupiedFollowers[selectedFollower.id] = opts.lockFollower
 
-    local destPos = nearby.findNearestNavMeshPosition(obj.position)
+    local destPos = nearby.findNearestNavMeshPosition(obj.position) or obj.position
     messages.show(self, followers, opts.confirmMsg)
     resetAiPackages(selectedFollower)
     selectedFollower:sendEvent("StartAIPackage", {

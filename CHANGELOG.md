@@ -1,5 +1,9 @@
 # Follower Commands (OpenMW)
 
+## 1.1.2
+
+- Fixed an error preventing actors from executing command if no navmesh positions were available
+
 ## 1.1.1
 
 - Fixed warning log spam

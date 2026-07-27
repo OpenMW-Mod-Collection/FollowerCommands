@@ -73,7 +73,6 @@ end
 
 local function isEmpty(container)
     local inv = container.type.inventory(container)
-    print(not inv:isResolved(), inv.resolve)
     if not inv:isResolved() then
         return false
     else

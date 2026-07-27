@@ -30,7 +30,7 @@ I.Settings.registerGroup {
             name = 'hotkey_name',
             description = 'hotkey_desc',
             renderer = 'inputBinding',
-            default = 'c',
+            default = consts.commandTriggerKey,
             argument = {
                 type = 'trigger',
                 key = consts.commandTriggerKey

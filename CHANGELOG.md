@@ -1,5 +1,10 @@
 # Follower Commands (OpenMW)
 
+## 1.1.3
+
+- Fixed keybind being synchronized with other modded keybinds
+- Removed a debug print statement
+
 ## 1.1.2
 
 - Fixed an error preventing actors from executing command if no navmesh positions were available

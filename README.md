@@ -26,7 +26,7 @@ Don't let me down.
 
 ## Requirements
 
-- [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053)
+- [Follower Detection Util](https://www.nexusmods.com/morrowind/mods/58053) version 2.2 or newer
 
 ## Incompatible Mods
 

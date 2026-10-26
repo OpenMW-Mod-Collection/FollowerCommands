@@ -2,6 +2,7 @@ local types = require("openmw.types")
 local storage = require("openmw.storage")
 local core = require("openmw.core")
 local self = require("openmw.self")
+local I = require("openmw.interfaces")
 
 local consts = require("scripts.FollowerCommands.utils.consts")
 local messages = require("scripts.FollowerCommands.logic.messages")
@@ -67,11 +68,6 @@ picker.pickprobe = function(followers, opts)
     return selectedFollower, bestScore
 end
 
-local function isSummon(recordId)
-    return string.find(recordId, "_summon$")
-        or recordId == "bonewalker_greater_summ"
-end
-
 ---@param followers GameObject[]
 ---@return GameObject|nil
 picker.forceUntrap = function(followers)
@@ -79,7 +75,7 @@ picker.forceUntrap = function(followers)
     local highestHP = settingsCommands:get("kamikazeUntrapMinHealth")
     for _, follower in ipairs(followers) do
         -- summons are disposable
-        if isSummon(follower.recordId) then
+        if I.FollowerDetectionUtil.isSummon(follower.recordId) then
             return follower
         end
 

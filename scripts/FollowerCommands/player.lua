@@ -22,6 +22,8 @@ local settingsCommands = storage.playerSection("SettingsFollowerCommands_command
 deps.checkAll(self, "Follower Commands", { {
     plugin = "FollowerDetectionUtil.omwscripts",
     interface = I.FollowerDetectionUtil,
+    minVersion = 5,
+    curVersion = I.FollowerDetectionUtil and I.FollowerDetectionUtil.version or -1,
 } })
 
 local lastCommand

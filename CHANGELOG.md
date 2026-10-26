@@ -1,5 +1,10 @@
 # Follower Commands (OpenMW)
 
+## 1.2
+
+- Added support for PTR summons
+- Mod now requires Follower Detection Util version 2.2 or newer
+
 ## 1.1.4
 
 - Fixed anim warnings in logs

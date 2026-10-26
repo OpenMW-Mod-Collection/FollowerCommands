@@ -1,5 +1,9 @@
 # Follower Commands (OpenMW)
 
+## 1.1.4
+
+- Fixed anim warnings in logs
+
 ## 1.1.3
 
 - Fixed keybind being synchronized with other modded keybinds
